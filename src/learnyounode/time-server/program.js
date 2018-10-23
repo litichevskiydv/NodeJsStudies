@@ -1,5 +1,4 @@
 const net = require("net");
-const util = require("util");
 const strftime = require("strftime");
 
 let server = net.createServer(socket => {
