@@ -9,3 +9,5 @@ console.log(String.isEmpty(undefined));
 console.log(String.isEmpty(null));
 console.log(String.isEmpty(""));
 console.log(String.isEmpty("test"));
+
+console.log("test".reverse());

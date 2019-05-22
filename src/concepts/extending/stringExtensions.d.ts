@@ -3,5 +3,9 @@ declare module "stringExtensions" {
     interface StringConstructor {
       isEmpty(value: String): Boolean;
     }
+
+    interface String {
+      reverse(): String;
+    }
   }
 }
