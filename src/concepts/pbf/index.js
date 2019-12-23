@@ -1,8 +1,12 @@
-const fs = require("fs");
+const path = require("path");
 const compile = require("pbf/compile");
-const protobufSchema = require("protocol-buffers-schema");
 
-const proto = protobufSchema.parse(fs.readFileSync("./example.proto"));
-const Line = compile(proto).Line;
+const { loadSync } = require("./schemeLoader");
 
-console.log(Line);
+const protoScheme = loadSync(path.join(__dirname, "./example.proto"), [
+  path.join(__dirname, "./include/"),
+  path.join(__dirname, "../../../node_modules/grpc-tools/bin/")
+]);
+const HelloRequest = compile(protoScheme).HelloRequest;
+
+console.log(HelloRequest);
