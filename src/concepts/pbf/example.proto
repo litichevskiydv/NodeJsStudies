@@ -1,0 +1,14 @@
+syntax = "proto3";
+package v1;
+
+message Point {
+    int32 x = 1;
+    int32 y = 2;
+    string label = 3;
+  }
+  
+  message Line {
+    Point start = 1;
+    Point end = 2;
+    string label = 3;
+  }
