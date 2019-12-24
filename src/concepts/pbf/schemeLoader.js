@@ -1,43 +1,8 @@
 const path = require("path");
-const fs = require("fs-extra");
 const { set } = require("dot-prop");
 const protobufSchema = require("protocol-buffers-schema");
 
-/**
- * @param {string} protoFilePath
- * @param {string[]} includeDirs
- * @returns {Promise<Buffer>}
- */
-const readFile = async (protoFilePath, includeDirs) => {
-  if (path.isAbsolute(protoFilePath)) return fs.readFile(protoFilePath);
-
-  for (const includeDir of includeDirs) {
-    const fullPath = path.join(includeDir, protoFilePath);
-    if ((await fs.pathExists(fullPath)) === false) continue;
-
-    return fs.readFile(fullPath);
-  }
-
-  throw new Error(`File ${protoFilePath} does not exist`);
-};
-
-/**
- * @param {string} protoFilePath
- * @param {string[]} includeDirs
- * @returns {Buffer}
- */
-const readFileSync = (protoFilePath, includeDirs) => {
-  if (path.isAbsolute(protoFilePath)) return fs.readFileSync(protoFilePath);
-
-  for (const includeDir of includeDirs) {
-    const fullPath = path.join(includeDir, protoFilePath);
-    if (fs.pathExistsSync(fullPath) === false) continue;
-
-    return fs.readFileSync(fullPath);
-  }
-
-  throw new Error(`File ${protoFilePath} does not exist`);
-};
+const filesReader = require("./filesReader");
 
 /**
  * @param {any} packagesStructure
@@ -76,6 +41,10 @@ const collectMessagesAndEnums = (parentKey, structure) => {
   return scheme;
 };
 
+/**
+ * @param {string} protoFilePath
+ * @param {string[]} includeDirs
+ */
 const load = async (protoFilePath, includeDirs) => {
   let rootPackageName = null;
   const packagesStructure = {};
@@ -85,7 +54,7 @@ const load = async (protoFilePath, includeDirs) => {
     const pathForProcessing = pathsForProcessing.shift();
     if (processedPaths.has(pathForProcessing)) continue;
 
-    const fileContent = await readFile(pathForProcessing, includeDirs);
+    const fileContent = await filesReader.read(pathForProcessing, includeDirs);
     const fileScheme = processFile(packagesStructure, rootPackageName, pathForProcessing, fileContent);
     if (pathForProcessing === protoFilePath) rootPackageName = fileScheme.package;
 
@@ -96,6 +65,10 @@ const load = async (protoFilePath, includeDirs) => {
   return collectMessagesAndEnums(null, packagesStructure);
 };
 
+/**
+ * @param {string} protoFilePath
+ * @param {string[]} includeDirs
+ */
 const loadSync = (protoFilePath, includeDirs) => {
   let rootPackageName = null;
   const packagesStructure = {};
@@ -105,7 +78,7 @@ const loadSync = (protoFilePath, includeDirs) => {
     const pathForProcessing = pathsForProcessing.shift();
     if (processedPaths.has(pathForProcessing)) continue;
 
-    const fileContent = readFileSync(pathForProcessing, includeDirs);
+    const fileContent = filesReader.readSync(pathForProcessing, includeDirs);
     const fileScheme = processFile(packagesStructure, rootPackageName, pathForProcessing, fileContent);
     if (pathForProcessing === protoFilePath) rootPackageName = fileScheme.package;
 
