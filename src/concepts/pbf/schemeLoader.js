@@ -16,9 +16,9 @@ const processFile = (packagesStructure, rootPackageName, protofileName, protoFil
   const packageName = protoFileScheme.package;
   const fileBaseName = path.basename(protofileName, path.extname(protofileName));
   const namespaceName =
-    rootPackageName && rootPackageName !== packageName && (packageName || "").length > 0
-      ? `${packageName}.${fileBaseName}`
-      : fileBaseName;
+    rootPackageName === undefined || !packageName || packageName === rootPackageName
+      ? fileBaseName
+      : `${packageName}.${fileBaseName}`;
   set(packagesStructure, namespaceName, protoFileScheme);
 
   return protoFileScheme;
@@ -46,7 +46,7 @@ const collectMessagesAndEnums = (parentKey, structure) => {
  * @param {string[]} includeDirs
  */
 const load = async (protoFilePath, includeDirs) => {
-  let rootPackageName = null;
+  let rootFileScheme = {};
   const packagesStructure = {};
   const processedPaths = new Set();
   const pathsForProcessing = [protoFilePath];
@@ -55,14 +55,14 @@ const load = async (protoFilePath, includeDirs) => {
     if (processedPaths.has(pathForProcessing)) continue;
 
     const fileContent = await filesReader.read(pathForProcessing, includeDirs);
-    const fileScheme = processFile(packagesStructure, rootPackageName, pathForProcessing, fileContent);
-    if (pathForProcessing === protoFilePath) rootPackageName = fileScheme.package;
+    const fileScheme = processFile(packagesStructure, rootFileScheme.package, pathForProcessing, fileContent);
+    if (pathForProcessing === protoFilePath) rootFileScheme = fileScheme;
 
     pathsForProcessing.push(...fileScheme.imports);
     processedPaths.add(pathForProcessing);
   }
 
-  return collectMessagesAndEnums(null, packagesStructure);
+  return Object.assign(rootFileScheme, collectMessagesAndEnums(null, packagesStructure));
 };
 
 /**
@@ -70,7 +70,7 @@ const load = async (protoFilePath, includeDirs) => {
  * @param {string[]} includeDirs
  */
 const loadSync = (protoFilePath, includeDirs) => {
-  let rootPackageName = null;
+  let rootFileScheme = {};
   const packagesStructure = {};
   const processedPaths = new Set();
   const pathsForProcessing = [protoFilePath];
@@ -79,14 +79,14 @@ const loadSync = (protoFilePath, includeDirs) => {
     if (processedPaths.has(pathForProcessing)) continue;
 
     const fileContent = filesReader.readSync(pathForProcessing, includeDirs);
-    const fileScheme = processFile(packagesStructure, rootPackageName, pathForProcessing, fileContent);
-    if (pathForProcessing === protoFilePath) rootPackageName = fileScheme.package;
+    const fileScheme = processFile(packagesStructure, rootFileScheme.package, pathForProcessing, fileContent);
+    if (pathForProcessing === protoFilePath) rootFileScheme = fileScheme;
 
     pathsForProcessing.push(...fileScheme.imports);
     processedPaths.add(pathForProcessing);
   }
 
-  return collectMessagesAndEnums(null, packagesStructure);
+  return Object.assign(rootFileScheme, collectMessagesAndEnums(null, packagesStructure));
 };
 
 module.exports = {
