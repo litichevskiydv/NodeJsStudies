@@ -54,7 +54,6 @@ const processFile = (packagesStructure, rootPackageName, protofileName, protoFil
     rootPackageName && rootPackageName !== packageName && (packageName || "").length > 0
       ? `${packageName}.${fileBaseName}`
       : fileBaseName;
-
   set(packagesStructure, namespaceName, protoFileScheme);
 
   return protoFileScheme;
@@ -65,8 +64,8 @@ const processFile = (packagesStructure, rootPackageName, protofileName, protoFil
  * @param {any} structure
  */
 const collectMessagesAndEnums = (parentKey, structure) => {
-  const scheme = { name: parentKey, enums: [], messages: [] };
-  if (parentKey) scheme.fields = [];
+  const scheme = { enums: [], messages: [] };
+  Object.assign(scheme, parentKey ? { name: parentKey, fields: [] } : {});
 
   for (const [key, childStructure] of Object.entries(structure))
     if (childStructure.enums || childStructure.messages) {
