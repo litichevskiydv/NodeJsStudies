@@ -65,12 +65,12 @@ const processFile = (packagesStructure, rootPackageName, protofileName, protoFil
  */
 const collectMessagesAndEnums = (parentKey, structure) => {
   const scheme = { enums: [], messages: [] };
-  Object.assign(scheme, parentKey ? { name: parentKey, fields: [] } : {});
+  if (parentKey) Object.assign(scheme, { name: parentKey, fields: [] });
 
   for (const [key, childStructure] of Object.entries(structure))
     if (childStructure.enums || childStructure.messages) {
-      scheme.enums.push(...(childStructure.enums || []));
-      scheme.messages.push(...(childStructure.messages || []));
+      scheme.enums.push(...childStructure.enums);
+      scheme.messages.push(...childStructure.messages);
     } else scheme.messages.push(collectMessagesAndEnums(key, childStructure));
 
   return scheme;
@@ -89,7 +89,7 @@ const load = async (protoFilePath, includeDirs) => {
     const fileScheme = processFile(packagesStructure, rootPackageName, pathForProcessing, fileContent);
     if (pathForProcessing === protoFilePath) rootPackageName = fileScheme.package;
 
-    pathsForProcessing.push(...(fileScheme.imports || []));
+    pathsForProcessing.push(...fileScheme.imports);
     processedPaths.add(pathForProcessing);
   }
 
@@ -109,7 +109,7 @@ const loadSync = (protoFilePath, includeDirs) => {
     const fileScheme = processFile(packagesStructure, rootPackageName, pathForProcessing, fileContent);
     if (pathForProcessing === protoFilePath) rootPackageName = fileScheme.package;
 
-    pathsForProcessing.push(...(fileScheme.imports || []));
+    pathsForProcessing.push(...fileScheme.imports);
     processedPaths.add(pathForProcessing);
   }
 
