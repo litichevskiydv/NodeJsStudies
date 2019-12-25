@@ -63,10 +63,7 @@ const createPackageDefinition = protoFileScheme => {
  * @param {DefinitionLoadingOptions} [options]
  */
 const load = async (protoFilePath, options) => {
-  const opts = options || {};
-  const includeDirs = (opts.includeDirs || []).concat([path.join(__dirname, "../include/")]);
-
-  return createPackageDefinition(await schemeLoader.load(protoFilePath, includeDirs));
+  return createPackageDefinition(await schemeLoader.load(protoFilePath, options));
 };
 
 /**
@@ -74,11 +71,7 @@ const load = async (protoFilePath, options) => {
  * @param {DefinitionLoadingOptions} [options]
  */
 const loadSync = (protoFilePath, options) => {
-  /**  @type {DefinitionLoadingOptions} */
-  const opts = options || {};
-  const includeDirs = (opts.includeDirs || []).concat([path.join(__dirname, "../include/")]);
-
-  return createPackageDefinition(schemeLoader.loadSync(protoFilePath, includeDirs));
+  return createPackageDefinition(schemeLoader.loadSync(protoFilePath, options));
 };
 
 module.exports = {
@@ -88,5 +81,6 @@ module.exports = {
 
 /**
  * @typedef {Object} DefinitionLoadingOptions
+ * @property {boolean} keepCase Preserve field names. The default is to change them to camel case.
  * @property {string[]} includeDirs Paths to search for imported `.proto` files.
  */

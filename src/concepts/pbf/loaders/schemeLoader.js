@@ -3,6 +3,7 @@ const { set } = require("dot-prop");
 const protobufSchema = require("protocol-buffers-schema");
 
 const filesReader = require("../utils/filesReader");
+const schemePreprocessors = require("./schemePreprocessors");
 
 /**
  * @param {any} packagesStructure
@@ -42,35 +43,24 @@ const collectMessagesAndEnums = (parentKey, structure) => {
 };
 
 /**
- * @param {string} protoFilePath
- * @param {string[]} includeDirs
+ * @param {DefinitionLoadingOptions} options
  */
-const load = async (protoFilePath, includeDirs) => {
-  let rootFileScheme = {};
-  const packagesStructure = {};
-  const processedPaths = new Set();
-  const pathsForProcessing = [protoFilePath];
-  while (pathsForProcessing.length > 0) {
-    const pathForProcessing = pathsForProcessing.shift();
-    if (processedPaths.has(pathForProcessing)) continue;
+const prepareOptions = options => {
+  /**  @type {DefinitionLoadingOptions} */
+  const opts = options || {};
+  opts.includeDirs = (opts.includeDirs || []).concat([path.join(__dirname, "../include/")]);
 
-    const fileContent = await filesReader.read(pathForProcessing, includeDirs);
-    const fileScheme = processFile(packagesStructure, rootFileScheme.package, pathForProcessing, fileContent);
-    if (pathForProcessing === protoFilePath) rootFileScheme = fileScheme;
-
-    pathsForProcessing.push(...fileScheme.imports);
-    processedPaths.add(pathForProcessing);
-  }
-
-  return Object.assign(rootFileScheme, collectMessagesAndEnums(null, packagesStructure));
+  return opts;
 };
 
 /**
  * @param {string} protoFilePath
- * @param {string[]} includeDirs
+ * @param {DefinitionLoadingOptions} [options]
  */
-const loadSync = (protoFilePath, includeDirs) => {
+const load = async (protoFilePath, options) => {
   let rootFileScheme = {};
+  const opts = prepareOptions(options);
+
   const packagesStructure = {};
   const processedPaths = new Set();
   const pathsForProcessing = [protoFilePath];
@@ -78,7 +68,7 @@ const loadSync = (protoFilePath, includeDirs) => {
     const pathForProcessing = pathsForProcessing.shift();
     if (processedPaths.has(pathForProcessing)) continue;
 
-    const fileContent = filesReader.readSync(pathForProcessing, includeDirs);
+    const fileContent = await filesReader.read(pathForProcessing, opts.includeDirs);
     const fileScheme = processFile(packagesStructure, rootFileScheme.package, pathForProcessing, fileContent);
     if (pathForProcessing === protoFilePath) rootFileScheme = fileScheme;
 
@@ -86,10 +76,46 @@ const loadSync = (protoFilePath, includeDirs) => {
     processedPaths.add(pathForProcessing);
   }
 
-  return Object.assign(rootFileScheme, collectMessagesAndEnums(null, packagesStructure));
+  Object.assign(rootFileScheme, collectMessagesAndEnums(null, packagesStructure));
+  if (!opts.keepCase) schemePreprocessors.convertFieldsCase(rootFileScheme);
+  return rootFileScheme;
+};
+
+/**
+ * @param {string} protoFilePath
+ * @param {DefinitionLoadingOptions} [options]
+ */
+const loadSync = (protoFilePath, options) => {
+  let rootFileScheme = {};
+  const opts = prepareOptions(options);
+
+  const packagesStructure = {};
+  const processedPaths = new Set();
+  const pathsForProcessing = [protoFilePath];
+  while (pathsForProcessing.length > 0) {
+    const pathForProcessing = pathsForProcessing.shift();
+    if (processedPaths.has(pathForProcessing)) continue;
+
+    const fileContent = filesReader.readSync(pathForProcessing, opts.includeDirs);
+    const fileScheme = processFile(packagesStructure, rootFileScheme.package, pathForProcessing, fileContent);
+    if (pathForProcessing === protoFilePath) rootFileScheme = fileScheme;
+
+    pathsForProcessing.push(...fileScheme.imports);
+    processedPaths.add(pathForProcessing);
+  }
+
+  Object.assign(rootFileScheme, collectMessagesAndEnums(null, packagesStructure));
+  if (!opts.keepCase) schemePreprocessors.convertFieldsCase(rootFileScheme);
+  return rootFileScheme;
 };
 
 module.exports = {
   load,
   loadSync
 };
+
+/**
+ * @typedef {Object} DefinitionLoadingOptions
+ * @property {boolean} keepCase Preserve field names. The default is to change them to camel case.
+ * @property {string[]} includeDirs Paths to search for imported `.proto` files.
+ */
