@@ -37,19 +37,23 @@ const createMethodDefinition = (serviceName, methodScheme, formatters) => {
   };
 };
 
-const createServiceDefinition = (serviceScheme, formatters) => {
+const createServiceDefinition = (serviceName, serviceScheme, formatters) => {
   const serviceDefinition = {};
   for (const methodScheme of serviceScheme.methods)
-    serviceDefinition[methodScheme.name] = createMethodDefinition(serviceScheme.name, methodScheme, formatters);
+    serviceDefinition[methodScheme.name] = createMethodDefinition(serviceName, methodScheme, formatters);
 
   return serviceDefinition;
 };
 
 const createPackageDefinition = protoFileScheme => {
   const packageDefinition = {};
+
   const formatters = compile(protoFileScheme);
-  for (const serviceScheme of protoFileScheme.services)
-    packageDefinition[serviceScheme.name] = createServiceDefinition(serviceScheme, formatters);
+  const packageName = protoFileScheme.package;
+  for (const serviceScheme of protoFileScheme.services) {
+    const serviceName = packageName ? `${packageName}.${serviceScheme.name}` : serviceName;
+    packageDefinition[serviceName] = createServiceDefinition(serviceName, serviceScheme, formatters);
+  }
 
   return packageDefinition;
 };
