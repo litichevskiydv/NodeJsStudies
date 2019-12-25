@@ -60,7 +60,7 @@ const createPackageDefinition = protoFileScheme => {
  */
 const load = async (protoFilePath, options) => {
   const opts = options || {};
-  const includeDirs = (opts.includeDirs || []).concat([path.join(__dirname, "./include/")]);
+  const includeDirs = (opts.includeDirs || []).concat([path.join(__dirname, "../include/")]);
 
   return createPackageDefinition(await schemeLoader.load(protoFilePath, includeDirs));
 };
@@ -72,7 +72,7 @@ const load = async (protoFilePath, options) => {
 const loadSync = (protoFilePath, options) => {
   /**  @type {DefinitionLoadingOptions} */
   const opts = options || {};
-  const includeDirs = (opts.includeDirs || []).concat([path.join(__dirname, "./include/")]);
+  const includeDirs = (opts.includeDirs || []).concat([path.join(__dirname, "../include/")]);
 
   return createPackageDefinition(schemeLoader.loadSync(protoFilePath, includeDirs));
 };

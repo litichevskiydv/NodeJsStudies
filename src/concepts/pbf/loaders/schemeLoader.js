@@ -2,7 +2,7 @@ const path = require("path");
 const { set } = require("dot-prop");
 const protobufSchema = require("protocol-buffers-schema");
 
-const filesReader = require("./filesReader");
+const filesReader = require("../utils/filesReader");
 
 /**
  * @param {any} packagesStructure
